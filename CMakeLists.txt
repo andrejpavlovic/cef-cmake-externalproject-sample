@@ -122,12 +122,22 @@
 #
 
 cmake_minimum_required(VERSION 2.8.12.2)
+include(ExternalProject)
 
 # Only generate Debug and Release configuration types.
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
 
 # Project name.
-project(cef)
+project(cef-cmake-externalproject-sample)
+
+# Define CEF3 build as an external project.
+ExternalProject_Add(
+    cef
+    # NOTE: change this url to point to the build of your choice
+    URL https://cefbuilds.s3.amazonaws.com/2272/win/41.0.2272.76/cef_binary_3.2272.2077_windows32.7z
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/vendor/cef
+    INSTALL_COMMAND ""
+)
 
 # Use folders in the resulting project files.
 set_property(GLOBAL PROPERTY OS_FOLDERS ON)
@@ -170,6 +180,10 @@ include("macros")
 
 # Source include directory.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+# Source include CEF3 directory.
+ExternalProject_Get_Property(cef SOURCE_DIR)
+include_directories(${SOURCE_DIR})
 
 # Allow C++ programs to use stdint.h macros specified in the C99 standard that
 # aren't in the C++ standard (e.g. UINT8_MAX, INT64_MIN, etc).
@@ -425,14 +439,20 @@ if(OS_WINDOWS)
   set(CEF_STANDARD_LIBS "comctl32.lib" "rpcrt4.lib" "shlwapi.lib")
 
   # CEF directory paths.
-  set(CEF_RESOURCE_DIR        "${CMAKE_CURRENT_SOURCE_DIR}/Resources")
-  set(CEF_BINARY_DIR          "${CMAKE_CURRENT_SOURCE_DIR}/$<CONFIGURATION>")
-  set(CEF_BINARY_DIR_DEBUG    "${CMAKE_CURRENT_SOURCE_DIR}/Debug")
-  set(CEF_BINARY_DIR_RELEASE  "${CMAKE_CURRENT_SOURCE_DIR}/Release")
+  ExternalProject_Get_Property(cef SOURCE_DIR)
+  set(CEF_RESOURCE_DIR        "${SOURCE_DIR}/Resources")
+  set(CEF_BINARY_DIR          "${SOURCE_DIR}/$<CONFIGURATION>")
+  set(CEF_BINARY_DIR_DEBUG    "${SOURCE_DIR}/Debug")
+  set(CEF_BINARY_DIR_RELEASE  "${SOURCE_DIR}/Release")
 
   # CEF library paths.
   set(CEF_LIB_DEBUG   "${CEF_BINARY_DIR_DEBUG}/libcef.lib")
   set(CEF_LIB_RELEASE "${CEF_BINARY_DIR_RELEASE}/libcef.lib")
+
+  # CEF wrapper library path.
+  ExternalProject_Get_Property(cef BINARY_DIR)
+  set(CEF_LIB_WRAPPER_DEBUG   "${BINARY_DIR}/libcef_dll/Debug/libcef_dll_wrapper.lib")
+  set(CEF_LIB_WRAPPER_RELEASE "${BINARY_DIR}/libcef_dll/Release/libcef_dll_wrapper.lib")
 
   # List of CEF binary files.
   set(CEF_BINARY_FILES
@@ -459,7 +479,63 @@ if(OS_WINDOWS)
     cef_200_percent.pak
     devtools_resources.pak
     icudtl.dat
-    locales
+    # NOTE: *.pak files must be explicitly specified instead of just "locales" directory, because
+    # CEF3 has not been downloaded and extracted yet, so cmake has no way of knowing whether
+    # locales is a file or a directory when COPY_FILES is called
+    # TODO: handle locales as directory
+    locales/am.pak
+    locales/ar.pak
+    locales/bg.pak
+    locales/bn.pak
+    locales/ca.pak
+    locales/cs.pak
+    locales/da.pak
+    locales/de.pak
+    locales/el.pak
+    locales/en-GB.pak
+    locales/en-US.pak
+    locales/es-419.pak
+    locales/es.pak
+    locales/et.pak
+    locales/fa.pak
+    locales/fi.pak
+    locales/fil.pak
+    locales/fr.pak
+    locales/gu.pak
+    locales/he.pak
+    locales/hi.pak
+    locales/hr.pak
+    locales/hu.pak
+    locales/id.pak
+    locales/it.pak
+    locales/ja.pak
+    locales/kn.pak
+    locales/ko.pak
+    locales/lt.pak
+    locales/lv.pak
+    locales/ml.pak
+    locales/mr.pak
+    locales/ms.pak
+    locales/nb.pak
+    locales/nl.pak
+    locales/pl.pak
+    locales/pt-BR.pak
+    locales/pt-PT.pak
+    locales/ro.pak
+    locales/ru.pak
+    locales/sk.pak
+    locales/sl.pak
+    locales/sr.pak
+    locales/sv.pak
+    locales/sw.pak
+    locales/ta.pak
+    locales/te.pak
+    locales/th.pak
+    locales/tr.pak
+    locales/uk.pak
+    locales/vi.pak
+    locales/zh-CN.pak
+    locales/zh-TW.pak
     )
 
   # Configure use of the sandbox.
@@ -525,8 +601,6 @@ set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CEF_LINKER_FLAGS_RELEASE} ${CEF_SHARED_
 # Include target subdirectories.
 #
 
-add_subdirectory(libcef_dll)
-add_subdirectory(cefclient)
 add_subdirectory(cefsimple)
 
 

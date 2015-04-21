@@ -181,7 +181,9 @@ endif()
 if(OS_WINDOWS)
   # Executable target.
   add_executable(${CEF_TARGET} WIN32 ${CEFSIMPLE_SRCS})
-  add_dependencies(${CEF_TARGET} libcef_dll_wrapper)
+  add_dependencies(${CEF_TARGET} cef)
+
+  ADD_LOGICAL_TARGET("libcef_dll_wrapper" "${CEF_LIB_WRAPPER_DEBUG}" "${CEF_LIB_WRAPPER_RELEASE}")
   target_link_libraries(${CEF_TARGET} libcef_lib libcef_dll_wrapper ${CEF_STANDARD_LIBS})
 
   if(USE_SANDBOX)
