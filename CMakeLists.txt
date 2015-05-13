@@ -130,15 +130,6 @@ set(CMAKE_CONFIGURATION_TYPES Debug Release)
 # Project name.
 project(cef-cmake-externalproject-sample)
 
-# Define CEF3 build as an external project.
-ExternalProject_Add(
-    cef
-    # NOTE: change this url to point to the build of your choice
-    URL https://cefbuilds.s3.amazonaws.com/2272/win/41.0.2272.76/cef_binary_3.2272.2077_windows32.7z
-    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/vendor/cef
-    INSTALL_COMMAND ""
-)
-
 # Use folders in the resulting project files.
 set_property(GLOBAL PROPERTY OS_FOLDERS ON)
 
@@ -152,6 +143,28 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
   set(OS_WINDOWS 1)
 endif()
+
+# Determine the platform.
+if(OS_MACOSX)
+  # set(CEF_URL https://cefbuilds.s3.amazonaws.com/2272/mac64/41.0.2272.76/cef_binary_3.2272.2077_macosx64.7z)
+elseif(OS_LINUX)
+  # set(CEF_URL https://cefbuilds.s3.amazonaws.com/2357/linux32/43.0.2357.18/cef_binary_3.2357.1267.g75b5dd4_linux32.7z)
+elseif(OS_WINDOWS)
+  # set(CEF_URL https://cefbuilds.s3.amazonaws.com/2357/win/43.0.2357.18/cef_binary_3.2357.1267.g75b5dd4_windows32.7z)
+endif()
+
+if(NOT DEFINED CEF_URL)
+  message(FATAL_ERROR "No download URL specified for Chromium Embedded Framework")
+endif()
+
+
+# Define CEF3 build as an external project.
+ExternalProject_Add(
+    cef
+    URL ${CEF_URL}
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/vendor/cef
+    INSTALL_COMMAND ""
+)
 
 # Determine the project architecture.
 if(NOT DEFINED PROJECT_ARCH)
@@ -379,13 +392,20 @@ if(OS_MACOSX)
   endif()
 
   # CEF directory paths.
-  set(CEF_BINARY_DIR          "${CMAKE_CURRENT_SOURCE_DIR}/$<CONFIGURATION>")
-  set(CEF_BINARY_DIR_DEBUG    "${CMAKE_CURRENT_SOURCE_DIR}/Debug")
-  set(CEF_BINARY_DIR_RELEASE  "${CMAKE_CURRENT_SOURCE_DIR}/Release")
+  ExternalProject_Get_Property(cef SOURCE_DIR)
+  set(CEF_BINARY_DIR          "${SOURCE_DIR}/$<CONFIGURATION>")
+  set(CEF_BINARY_DIR_DEBUG    "${SOURCE_DIR}/Debug")
+  set(CEF_BINARY_DIR_RELEASE  "${SOURCE_DIR}/Release")
 
   # CEF library paths.
   set(CEF_LIB_DEBUG   "${CEF_BINARY_DIR_DEBUG}/Chromium Embedded Framework.framework/Chromium Embedded Framework")
   set(CEF_LIB_RELEASE "${CEF_BINARY_DIR_RELEASE}/Chromium Embedded Framework.framework/Chromium Embedded Framework")
+
+  # CEF wrapper library path.
+  ExternalProject_Get_Property(cef BINARY_DIR)
+  set(CEF_LIB_WRAPPER_DEBUG   "${BINARY_DIR}/libcef_dll/Debug/libcef_dll_wrapper.a")
+  set(CEF_LIB_WRAPPER_RELEASE "${BINARY_DIR}/libcef_dll/Release/libcef_dll_wrapper.a")
+
 endif()
 
 
