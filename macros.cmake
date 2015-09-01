@@ -194,12 +194,13 @@ endmacro()
 
 # Make the other helper app bundles.
 macro(MAKE_MACOSX_HELPERS target app_path)
+  ExternalProject_Get_Property(cef SOURCE_DIR)
   add_custom_command(TARGET ${target}
     POST_BUILD
     # The exported variables need to be set for generators other than Xcode.
     COMMAND export BUILT_PRODUCTS_DIR=${app_path} &&
             export CONTENTS_FOLDER_PATH=/Contents &&
-            tools/make_more_helpers.sh "Frameworks" "${target}"
+            "${SOURCE_DIR}/tools/make_more_helpers.sh" "Frameworks" "${target}"
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     VERBATIM
     )
